@@ -125,7 +125,7 @@ export const updateProfile = async (req, res) => {
         }
 
         const uploadResponse = await cloudinary.uploader.upload(profilePic)
-        
+
         const updatedUser = await User.findByIdAndUpdate(userId, {
             profilePic: uploadResponse.secure_url
         }, {
@@ -141,6 +141,21 @@ export const updateProfile = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Error in updating profile -> " + error.message
+        })
+    }
+}
+
+export const checkAuth = (req, res) => {
+    try {
+        res.status(200).json({
+            success: true,
+            message: "User is authenticated",
+            data: req.user
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error in checking auth -> " + error.message
         })
     }
 }
