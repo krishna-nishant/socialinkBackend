@@ -1,6 +1,7 @@
 import { generateToken } from "../lib/utils.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import cloudinary from "../lib/cloudinary.js";
 
 export const signup = async (req, res) => {
     const { fullName, email, password } = req.body;
@@ -81,7 +82,7 @@ export const login = async (req, res) => {
 
         // generate jwt token
         generateToken(userExists._id, res)
-        
+
         res.status(200).json({
             success: true,
             message: "User logged in successfully",
@@ -108,6 +109,38 @@ export const logout = (req, res) => {
         res.status(500).json({
             success: false,
             message: "Error in logging out user -> " + error.message
+        })
+    }
+}
+
+export const updateProfile = async (req, res) => {
+    try {
+        const { profilePic } = req.body
+        const userId = req.user._id
+        if (!profilePic) {
+            return res.status(400).json({
+                success: false,
+                message: "Please upload a profile picture"
+            })
+        }
+
+        const uploadResponse = await cloudinary.uploader.upload(profilePic)
+        
+        const updatedUser = await User.findByIdAndUpdate(userId, {
+            profilePic: uploadResponse.secure_url
+        }, {
+            new: true // return the updated user not old one
+        })
+
+        res.status(200).json({
+            success: true,
+            message: "Profile picture updated successfully",
+            data: updatedUser
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error in updating profile -> " + error.message
         })
     }
 }
