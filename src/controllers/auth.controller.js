@@ -60,10 +60,54 @@ export const signup = async (req, res) => {
     }
 }
 
-export const login = (req, res) => {
-    res.send("Login route");
+export const login = async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const userExists = await User.findOne({ email })
+        if (!userExists) {
+            return res.status(400).json({
+                success: false,
+                message: "User does not exist"
+            })
+        }
+
+        const isValidPassword = await bcrypt.compare(password, userExists.password)
+        if (!isValidPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid password"
+            })
+        }
+
+        // generate jwt token
+        generateToken(userExists._id, res)
+        
+        res.status(200).json({
+            success: true,
+            message: "User logged in successfully",
+            data: userExists
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error in logging in user -> " + error.message
+        })
+    }
 }
 
 export const logout = (req, res) => {
-    res.send("Logout route");
+    try {
+        res.cookie("jwt", "", {
+            maxAge: 0
+        })
+        res.status(200).json({
+            success: true,
+            message: "User logged out successfully"
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error in logging out user -> " + error.message
+        })
+    }
 }
